@@ -50,26 +50,16 @@ pnpm tauri build    # release .app + .dmg
 
 ## How It Works
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Model Checker                                       │
-├──────────────┬──────────────────────────────────────┤
-│              │                                        │
-│  Connections │  Connection Detail                     │
-│              │                                        │
-│  ● OpenAI   │  Status: Available ✓                   │
-│  ○ Ollama   │  Models: 12  Latency: 142ms            │
-│  ○ vLLM     │                                        │
-│              │  ┌─ Equivalent Command ─────────────┐  │
-│              │  │ curl -X POST ".../completions" \ │  │
-│              │  │   -H "Authorization: Bearer ..." │  │
-│              │  │   -d '{"model":"gpt-4o",...}'    │  │
-│              │  └─────────────────────────────────┘  │
-│  [+ New]     │                                        │
-└──────────────┴──────────────────────────────────────┘
-```
+A two-panel layout: **sidebar** lists your saved connections, **detail pane** shows status, models, latency, and test results.
 
-When a test fails, you get the exact curl command to paste into your terminal and debug.
+When a test runs, you see the equivalent `curl` command — copy it straight into your terminal to debug.
+
+```bash
+curl -X POST "https://api.example.com/v1/chat/completions" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"Reply with the single word OK."}],"max_tokens":5,"temperature":0}'
+```
 
 ## Tech Stack
 
