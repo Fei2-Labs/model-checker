@@ -1,66 +1,114 @@
-# Model Checker
+<div align="center">
 
-A macOS desktop app for managing and testing OpenAI-compatible API connections.
+# 🔍 Model Checker
 
-![Tauri](https://img.shields.io/badge/Tauri-2-blue) ![React](https://img.shields.io/badge/React-18-61dafb) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6) ![License](https://img.shields.io/badge/license-MIT-green)
+**Know if your AI endpoints actually work — before your code hits them.**
 
-## What it does
+A native macOS app that tests OpenAI-compatible API connections for real chat completion capability, not just HTTP reachability.
 
-Model Checker lets you save multiple OpenAI-compatible API endpoints, inspect their model inventories, and verify that they can actually perform chat completion — not just respond to HTTP.
+[![Release](https://img.shields.io/github/v/release/Fei2-Labs/model-checker?style=flat-square)](https://github.com/Fei2-Labs/model-checker/releases)
+[![License](https://img.shields.io/github/license/Fei2-Labs/model-checker?style=flat-square)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/Fei2-Labs/model-checker?style=flat-square)](https://github.com/Fei2-Labs/model-checker/stargazers)
 
-- **Saved Connections** — persist across restarts; API keys stored in the OS keychain, never in plain config
-- **Model Inventory Check** — discovers all models exposed by a connection via the `/models` endpoint
-- **Availability Test** — sends a minimal chat completion request to confirm the connection is truly usable
-- **Compatibility Status** — `Available`, `Partially Compatible`, `Needs Test Model`, `Refresh Failed`, `Unavailable`, or `Untested`
-- **Dark mode** — follows macOS system appearance automatically
+</div>
 
-## Stack
+---
 
-| Layer | Tech |
-|---|---|
-| Desktop shell | Tauri 2 |
-| Frontend | React 18 + TypeScript + Vite |
-| Styling | Tailwind CSS |
-| Secure storage | OS keychain via `keyring` |
-| Package manager | pnpm |
+## The Problem
 
-## Getting started
+You add an API endpoint. The server responds. Models show up. You think it works.
 
-**Prerequisites:** Node 20, pnpm, Rust toolchain
+Then your app breaks because the model can't actually complete a chat request.
+
+**Model Checker catches this before you ship.**
+
+## What It Does
+
+| Feature | Description |
+|---------|-------------|
+| 🔌 **Saved Connections** | Persist endpoints across restarts. API keys live in your OS keychain — never in config files. |
+| 📦 **Model Inventory** | Discover all models exposed by a connection via `/models`. See what got added or removed. |
+| ⚡ **Availability Test** | Send a real chat completion request. If it fails, you know immediately — with the exact curl command to reproduce. |
+| 🎯 **Smart Status** | `Available` · `Partially Compatible` · `Needs Test Model` · `Refresh Failed` · `Unavailable` · `Untested` |
+| 🧠 **Thinking Model Support** | Works with Qwen3, DeepSeek-R1, and other reasoning models that use `reasoning_content`. |
+| 🌙 **Dark Mode** | Follows macOS system appearance automatically. |
+
+## Quick Start
+
+**Download the latest release:**
+
+👉 [**Model Checker.dmg**](https://github.com/Fei2-Labs/model-checker/releases/latest) (macOS Apple Silicon)
+
+Or build from source:
 
 ```bash
-# Install dependencies
+# Prerequisites: Node 20, pnpm, Rust toolchain
 pnpm install
-
-# Run in development
-pnpm tauri dev
-
-# Build a release .app + .dmg
-pnpm tauri build
+pnpm tauri dev      # development
+pnpm tauri build    # release .app + .dmg
 ```
 
-The built app lands at:
+## How It Works
+
 ```
-src-tauri/target/release/bundle/macos/Model Checker.app
-src-tauri/target/release/bundle/dmg/Model Checker_x.x.x_aarch64.dmg
+┌─────────────────────────────────────────────────────┐
+│  Model Checker                                       │
+├──────────────┬──────────────────────────────────────┤
+│              │                                        │
+│  Connections │  Connection Detail                     │
+│              │                                        │
+│  ● OpenAI   │  Status: Available ✓                   │
+│  ○ Ollama   │  Models: 12  Latency: 142ms            │
+│  ○ vLLM     │                                        │
+│              │  ┌─ Equivalent Command ─────────────┐  │
+│              │  │ curl -X POST ".../completions" \ │  │
+│              │  │   -H "Authorization: Bearer ..." │  │
+│              │  │   -d '{"model":"gpt-4o",...}'    │  │
+│              │  └─────────────────────────────────┘  │
+│  [+ New]     │                                        │
+└──────────────┴──────────────────────────────────────┘
 ```
 
-## Project structure
+When a test fails, you get the exact curl command to paste into your terminal and debug.
+
+## Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Shell | [Tauri 2](https://tauri.app) |
+| Frontend | React 18 · TypeScript · Vite · Tailwind CSS |
+| Secrets | OS Keychain via [`keyring`](https://crates.io/crates/keyring) |
+| HTTP | [`reqwest`](https://crates.io/crates/reqwest) |
+
+## Project Structure
 
 ```
 src/                  React frontend
-  components/         UI components
-  lib/                API bindings and utilities
+  components/         UI components (sidebar, detail pane, forms)
+  lib/                Tauri API bindings
 src-tauri/
-  src/                Rust backend
+  src/
     commands.rs       Tauri command handlers
-    availability.rs   Availability Test logic
-    discovery.rs      Model Discovery logic
+    availability.rs   Chat completion probe
+    discovery.rs      Model inventory via /models
     secrets.rs        OS keychain wrapper
-    storage.rs        Saved Connection persistence
-  icons/              App icons (.icns, .ico, .png)
+    storage.rs        JSON persistence
 ```
+
+## Contributing
+
+Issues and PRs welcome. This is an early-stage tool — feedback on UX, edge cases with specific providers, and thinking-model compatibility is especially useful.
 
 ## License
 
-MIT
+[MIT](LICENSE)
+
+---
+
+<div align="center">
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Fei2-Labs/model-checker&type=Date)](https://star-history.com/#Fei2-Labs/model-checker&Date)
+
+</div>
