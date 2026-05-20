@@ -18,6 +18,8 @@ import {
   Zap,
   Database,
   AlertCircle,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface ConnectionDetailProps {
@@ -228,6 +230,8 @@ export function ConnectionDetailPane({ connection, onChange, onDeleted }: Connec
                   </span>
                 </div>
               )}
+              {/* Equivalent curl command */}
+              <CurlBlock baseUrl={connection.baseUrl} endpointPath={tr.endpointPath} testModel={tr.testModel} />
             </CardContent>
           </Card>
         )}
@@ -334,4 +338,64 @@ function relativeTime(iso: string): string {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+
+// NOTE: shows the equivalent curl command for the test
+function CurlBlock({
+  baseUrl,
+  endpointPath,
+  testModel,
+}: {
+  baseUrl: string;
+  endpointPath: string;
+  testModel: string | null;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const url = `${baseUrl.replace(/\/$/, "")}${endpointPath}`;
+  const isChat = endpointPath.includes("chat/completions");
+
+  const curl = isChat && testModel
+    ? [
+        `curl -X POST "${url}" \\`,
+        `  -H "Authorization: Bearer $API_KEY" \\`,
+        `  -H "Content-Type: application/json" \\`,
+        `  -d '{`,
+        `    "model": "${testModel}",`,
+        `    "messages": [{"role":"user","content":"Reply with the single word OK."}],`,
+        `    "max_tokens": 5,`,
+        `    "temperature": 0`,
+        `  }'`,
+      ].join("\n")
+    : [
+        `curl "${url}" \\`,
+        `  -H "Authorization: Bearer $API_KEY"`,
+      ].join("\n");
+
+  function handleCopy() {
+    void navigator.clipboard.writeText(curl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="mt-3 rounded-md bg-muted/50 border border-border/60 overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          Equivalent Command
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="px-3 py-2 text-[11px] font-mono leading-relaxed overflow-x-auto whitespace-pre text-foreground/80">
+        {curl}
+      </pre>
+    </div>
+  );
 }
