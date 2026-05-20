@@ -38,6 +38,8 @@ struct Choice {
 struct Message {
     #[serde(default)]
     content: Option<String>,
+    #[serde(default)]
+    reasoning_content: Option<String>,
 }
 
 /// POST `{base_url}/chat/completions` with the canonical Availability Test
@@ -84,15 +86,18 @@ pub async fn run_availability(
         latency_ms: started.elapsed().as_millis() as u64,
     })?;
 
-    let content = parsed
-        .choices
-        .first()
-        .and_then(|c| c.message.content.as_deref())
+    let msg = parsed.choices.first().map(|c| &c.message);
+    let content = msg
+        .and_then(|m| m.content.as_deref())
+        .unwrap_or("")
+        .trim();
+    let reasoning = msg
+        .and_then(|m| m.reasoning_content.as_deref())
         .unwrap_or("")
         .trim();
 
     let latency_ms = started.elapsed().as_millis() as u64;
-    if content.is_empty() {
+    if content.is_empty() && reasoning.is_empty() {
         return Err(AvailabilityErr {
             sanitized_error: "chat completion returned no content".to_string(),
             latency_ms,
