@@ -19,7 +19,7 @@ A saved, credentialed connection to an API endpoint that implements enough of th
 An OpenAI-Compatible Connection includes:
 
 - Base URL
-- Authentication Material
+- Authentication Material, when the provider requires it
 - provider compatibility type, if known
 - Discovered Models
 - optional Test Model
@@ -37,7 +37,7 @@ A persisted OpenAI-Compatible Connection that remains available across app resta
 
 A Saved Connection includes non-secret configuration such as Base URL, display name, selected Test Model, latest Compatibility Status, and latest known Model Inventory.
 
-Authentication Material belongs to the Saved Connection but must be stored through secure storage, not directly in plain configuration files.
+Authentication Material belongs to the Saved Connection when present but must be stored through secure storage, not directly in plain configuration files.
 
 ---
 
@@ -57,7 +57,7 @@ The app should probe or normalize common OpenAI-compatible paths, then store onl
 
 ### Authentication Material
 
-The secret value required to authenticate requests against an OpenAI-Compatible Connection.
+The secret value required to authenticate requests against an OpenAI-Compatible Connection, when the provider requires one.
 
 The initial supported authentication material is an API key.
 
@@ -197,6 +197,18 @@ Example intent:
 
 The exact prompt is implementation detail, but the domain requirement is that the app verifies real chat completion, not just endpoint reachability.
 
+The backend HTTP client currently allows up to 45 seconds for Discovery and Availability requests so slow but working providers can still complete the test.
+
+---
+
+### Hourly Test Schedule
+
+A Saved Connection may optionally run Availability Tests on a fixed cadence measured in whole hours while the app is open.
+
+Hourly Test Schedule must be configurable from the single-connection detail view and from bulk actions in the connection list.
+
+The app should run at most once per configured interval per Saved Connection and persist the schedule state with the Saved Connection record.
+
 ---
 
 ### Available
@@ -319,7 +331,7 @@ A Saved Connection persists across app restarts.
 
 A Saved Connection has one Base URL.
 
-A Saved Connection has Authentication Material.
+A Saved Connection may have Authentication Material.
 
 A Saved Connection may have many Discovered Models.
 
@@ -507,7 +519,7 @@ Decision resolved:
 
 ### Secure Storage
 
-API keys must be stored securely across macOS, Windows, and Linux.
+API keys must be stored securely across macOS, Windows, and Linux when a connection uses one.
 
 Decision resolved:
 

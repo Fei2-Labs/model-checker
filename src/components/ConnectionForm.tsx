@@ -70,16 +70,17 @@ export function ConnectionForm({
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="apiKey">
-          Authentication Material (API key){apiKeyOptional ? " — leave blank to keep current" : ""}
+          Authentication Material (API key)
+          {apiKeyOptional ? " — leave blank to keep current" : " — optional"}
         </Label>
         <Input
           id="apiKey"
           type="password"
-          required={!apiKeyOptional}
+          required={false}
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           autoComplete="off"
-          placeholder={apiKeyOptional ? "(unchanged)" : "sk-..."}
+          placeholder={apiKeyOptional ? "(unchanged)" : "optional"}
         />
       </div>
       <div className="flex justify-end gap-2 pt-2">

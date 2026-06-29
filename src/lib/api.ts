@@ -34,6 +34,8 @@ export interface SavedConnection {
   displayName: string;
   baseUrl: string;
   testModel: string | null;
+  hourlyTestIntervalHours: number | null;
+  hourlyTestLastRunAt: string | null;
   modelInventory: DiscoveredModel[];
   compatibilityStatus: CompatibilityStatus;
   latestTestResult: TestResult | null;
@@ -48,12 +50,14 @@ export interface ConnectionSummary {
   displayName: string;
   baseUrl: string;
   compatibilityStatus: CompatibilityStatus;
+  hourlyTestIntervalHours: number | null;
+  hourlyTestLastRunAt: string | null;
 }
 
 export interface NewConnectionInput {
   displayName: string;
   baseUrl: string;
-  apiKey: string;
+  apiKey?: string;
   testModel: string | null;
 }
 
@@ -63,6 +67,8 @@ export interface UpdateConnectionInput {
   apiKey?: string;
   // `null` means "clear the selected Test Model"; `undefined` means "leave alone".
   testModel?: string | null;
+  hourlyTestIntervalHours?: number | null;
+  hourlyTestLastRunAt?: string | null;
 }
 
 export interface ModelInventoryResult {
@@ -74,6 +80,7 @@ export interface ModelInventoryResult {
 export const api = {
   listConnections: () => invoke<ConnectionSummary[]>("list_connections"),
   getConnection: (id: string) => invoke<ConnectionDetail>("get_connection", { id }),
+  getConnectionApiKey: (id: string) => invoke<string | null>("get_connection_api_key", { id }),
   createConnection: (input: NewConnectionInput) =>
     invoke<ConnectionDetail>("create_connection", { input }),
   updateConnection: (id: string, input: UpdateConnectionInput) =>

@@ -87,10 +87,7 @@ pub async fn run_availability(
     })?;
 
     let msg = parsed.choices.first().map(|c| &c.message);
-    let content = msg
-        .and_then(|m| m.content.as_deref())
-        .unwrap_or("")
-        .trim();
+    let content = msg.and_then(|m| m.content.as_deref()).unwrap_or("").trim();
     let reasoning = msg
         .and_then(|m| m.reasoning_content.as_deref())
         .unwrap_or("")

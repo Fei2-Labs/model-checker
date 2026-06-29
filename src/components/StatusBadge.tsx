@@ -8,7 +8,7 @@ const dotColor: Record<CompatibilityStatus, string> = {
   Unavailable: "bg-red-500",
   PartiallyCompatible: "bg-amber-500",
   NeedsTestModel: "bg-amber-500",
-  RefreshFailed: "bg-amber-500",
+  RefreshFailed: "bg-red-500",
   DiscoveringModels: "bg-blue-500 animate-pulse",
   Untested: "bg-muted-foreground/40",
 };
@@ -28,8 +28,9 @@ export function StatusBadge({ status }: { status: CompatibilityStatus }) {
         return "destructive";
       case "PartiallyCompatible":
       case "NeedsTestModel":
-      case "RefreshFailed":
         return "warning";
+      case "RefreshFailed":
+        return "destructive";
       case "DiscoveringModels":
         return "secondary";
       case "Untested":

@@ -80,6 +80,20 @@ pub async fn get_connection(
 }
 
 #[tauri::command]
+pub async fn get_connection_api_key(
+    id: Uuid,
+    state: State<'_, Arc<AppState>>,
+) -> AppResult<Option<String>> {
+    // Return None when no Authentication Material is stored, rather than surfacing
+    // a backend error for the detail bar's presence indicator.
+    match load_api_key(&state, id).await {
+        Ok(api_key) => Ok(Some(api_key)),
+        Err(AppError::Secrets(_)) => Ok(None),
+        Err(err) => Err(err),
+    }
+}
+
+#[tauri::command]
 pub async fn create_connection(
     input: NewConnectionInput,
     state: State<'_, Arc<AppState>>,
