@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ConnectionDetail as ConnectionDetailModel } from "@/lib/api";
+import type { AvailabilityProtocol, ConnectionDetail as ConnectionDetailModel } from "@/lib/api";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Input } from "./ui/input";
@@ -44,6 +44,7 @@ export function ConnectionDetailPane({
   const [copiedModelId, setCopiedModelId] = useState<string | null>(null);
   const [copyingApiKey, setCopyingApiKey] = useState(false);
   const [hourlyHours, setHourlyHours] = useState("");
+  const [protocol, setProtocol] = useState<AvailabilityProtocol>("chatCompletions");
 
   async function handleRefreshModels() {
     setRefreshing(true);
@@ -75,7 +76,7 @@ export function ConnectionDetailPane({
   async function handleRunAvailabilityTest() {
     setTesting(true);
     try {
-      const tr = await api.runAvailabilityTest(connection.id);
+      const tr = await api.runAvailabilityTest(connection.id, protocol);
       const fresh = await api.getConnection(connection.id);
       let next = fresh;
       if (fresh.hourlyTestIntervalHours != null) {
@@ -251,7 +252,17 @@ export function ConnectionDetailPane({
           </div>
         </div>
 
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2 mt-3 items-center">
+          <Select value={protocol} onValueChange={(value) => setProtocol(parseProtocol(value))}>
+            <SelectTrigger aria-label="Select availability test protocol" className="h-8 w-44 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="chatCompletions" className="text-xs">OpenAI Chat Completions</SelectItem>
+              <SelectItem value="anthropicMessages" className="text-xs">Anthropic Messages</SelectItem>
+              <SelectItem value="responses" className="text-xs">OpenAI Responses</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             size="sm"
             variant="outline"
@@ -539,21 +550,36 @@ function CurlBlock({
 
   const url = `${baseUrl.replace(/\/$/, "")}${endpointPath}`;
   const isChat = endpointPath.includes("chat/completions");
+  const isAnthropic = endpointPath.endsWith("/messages");
+  const modelJson = testModel ? JSON.stringify(testModel) : null;
+  const authHeader = isAnthropic ? '  -H "x-api-key: $API_KEY"' : '  -H "Authorization: Bearer $API_KEY"';
+  const protocolHeaders = isAnthropic
+    ? [authHeader, '  -H "anthropic-version: 2023-06-01"', '  -H "Content-Type: application/json"']
+    : [authHeader, '  -H "Content-Type: application/json"'];
+  const body = modelJson
+    ? isChat
+      ? JSON.stringify({
+          model: testModel,
+          messages: [{ role: "user", content: "Reply with the single word OK." }],
+          max_tokens: 5,
+        })
+      : isAnthropic
+        ? JSON.stringify({
+            model: testModel,
+            max_tokens: 5,
+            messages: [{ role: "user", content: "Reply with the single word OK." }],
+          })
+        : JSON.stringify({ model: testModel, input: "Reply with the single word OK.", max_output_tokens: 5 })
+    : null;
 
   const curl =
-    isChat && testModel
-      ? [
-          `curl -X POST "${url}" \\`,
-          `  -H "Authorization: Bearer $API_KEY" \\`,
-          `  -H "Content-Type: application/json" \\`,
-          `  -d '{`,
-          `    "model": "${testModel}",`,
-          `    "messages": [{"role":"user","content":"Reply with the single word OK."}],`,
-          `    "max_tokens": 5,`,
-          `    "temperature": 0`,
-          `  }'`,
-        ].join("\n")
-      : [`curl "${url}" \\`, `  -H "Authorization: Bearer $API_KEY"`].join("\n");
+    [
+      `curl -X POST "${url}" \\`,
+      ...protocolHeaders.map((header, index) =>
+        header + (index < protocolHeaders.length - 1 || body ? ` ${"\\"}` : ""),
+      ),
+      ...(body ? [`  -d '${shellQuote(body)}'`] : []),
+    ].join("\n");
 
   function handleCopy() {
     void navigator.clipboard.writeText(curl);
@@ -581,4 +607,13 @@ function CurlBlock({
       </pre>
     </div>
   );
+}
+
+function parseProtocol(value: string): AvailabilityProtocol {
+  if (value === "anthropicMessages" || value === "responses") return value;
+  return "chatCompletions";
+}
+
+function shellQuote(value: string): string {
+  return value.replaceAll("'", "'\"'\"'");
 }

@@ -13,6 +13,24 @@ use uuid::Uuid;
 pub use inference::{infer_test_model, InferenceOutcome};
 pub use status::{transition_after_refresh, transition_after_test, RefreshOutcome, TestOutcome};
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AvailabilityProtocol {
+    ChatCompletions,
+    AnthropicMessages,
+    Responses,
+}
+
+impl AvailabilityProtocol {
+    pub fn endpoint_path(self) -> &'static str {
+        match self {
+            Self::ChatCompletions => "/chat/completions",
+            Self::AnthropicMessages => "/messages",
+            Self::Responses => "/responses",
+        }
+    }
+}
+
 /// Compatibility Status as defined in `CONTEXT.md`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CompatibilityStatus {

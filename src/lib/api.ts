@@ -19,6 +19,8 @@ export interface DiscoveredModel {
   id: string;
 }
 
+export type AvailabilityProtocol = "chatCompletions" | "anthropicMessages" | "responses";
+
 export interface TestResult {
   timestamp: string;
   baseUrl: string;
@@ -87,7 +89,8 @@ export const api = {
     invoke<ConnectionDetail>("update_connection", { id, input }),
   deleteConnection: (id: string) => invoke<void>("delete_connection", { id }),
   refreshModels: (id: string) => invoke<ModelInventoryResult>("refresh_models", { id }),
-  runAvailabilityTest: (id: string) => invoke<TestResult>("run_availability_test", { id }),
+  runAvailabilityTest: (id: string, protocol: AvailabilityProtocol = "chatCompletions") =>
+    invoke<TestResult>("run_availability_test", { id, protocol }),
 };
 
 /** Map a Compatibility Status to a human-friendly label using canonical domain terms. */
