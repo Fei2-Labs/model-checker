@@ -13,10 +13,10 @@ use uuid::Uuid;
 use crate::availability::{run_availability, AvailabilityErr};
 use crate::discovery::probe_and_discover;
 use crate::domain::{
-    infer_test_model, transition_after_refresh, transition_after_test, CompatibilityStatus,
-    ConnectionDetail, ConnectionSummary, DiscoveredModel, InferenceOutcome, ModelInventoryResult,
-    NewConnectionInput, RefreshOutcome, SavedConnection, TestOutcome, TestResult,
-    UpdateConnectionInput,
+    infer_test_model, transition_after_refresh, transition_after_test, AvailabilityProtocol,
+    CompatibilityStatus, ConnectionDetail, ConnectionSummary, DiscoveredModel, InferenceOutcome,
+    ModelInventoryResult, NewConnectionInput, RefreshOutcome, SavedConnection, TestOutcome,
+    TestResult, UpdateConnectionInput,
 };
 use crate::error::{AppError, AppResult};
 use crate::secrets;
@@ -269,8 +269,10 @@ pub async fn refresh_models(
 #[tauri::command]
 pub async fn run_availability_test(
     id: Uuid,
+    protocol: Option<AvailabilityProtocol>,
     state: State<'_, Arc<AppState>>,
 ) -> AppResult<TestResult> {
+    let protocol = protocol.unwrap_or(AvailabilityProtocol::ChatCompletions);
     let (base_url, api_key, selected_test_model, inventory) = {
         let store = state.store.lock().await;
         let conn = store.get(id)?.clone();
@@ -293,7 +295,7 @@ pub async fn run_availability_test(
         let tr = TestResult {
             timestamp: Utc::now(),
             base_url: base_url.clone(),
-            endpoint_path: "/chat/completions".to_string(),
+            endpoint_path: protocol.endpoint_path().to_string(),
             test_model: None,
             status_outcome: new_status,
             sanitized_error: Some(
@@ -311,7 +313,7 @@ pub async fn run_availability_test(
     };
 
     let had_prior_discovery = !inventory.is_empty();
-    let outcome = run_availability(&state.http, &base_url, &api_key, &model).await;
+    let outcome = run_availability(&state.http, &base_url, &api_key, &model, protocol).await;
 
     let (status_outcome, latency_ms, sanitized_error): (
         CompatibilityStatus,
@@ -343,7 +345,7 @@ pub async fn run_availability_test(
     let tr = TestResult {
         timestamp: Utc::now(),
         base_url: base_url.clone(),
-        endpoint_path: "/chat/completions".to_string(),
+        endpoint_path: protocol.endpoint_path().to_string(),
         test_model: Some(model),
         status_outcome,
         sanitized_error,
